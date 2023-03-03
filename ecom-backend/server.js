@@ -7,8 +7,7 @@ const database = require("./services/database");
 const path = require("path");
 const bcrypt = require("bcrypt");
 const { expressjwt: jwt } = require("express-jwt");
-const jwksRsa = require('jwks-rsa');
-
+const jwksRsa = require("jwks-rsa");
 
 const PORT = process.env.PORT || 3333;
 
@@ -16,32 +15,19 @@ app.use(cors());
 app.use(express.json());
 app.use(express.static(path.join(__dirname, "../ecom-frontend/public/images")));
 
-
 const sequelize = new Sequelize("ecom", "postgres", "387456", {
   host: "localhost",
   port: 5432,
   dialect: "postgres",
 });
 
-const User = sequelize.define("User", {
+const user = sequelize.define("user", {
   email: {
     type: Sequelize.STRING,
     allowNull: false,
     unique: true,
   },
   password: {
-    type: Sequelize.STRING,
-    allowNull: false,
-  },
-  createdAt: {
-    type: Sequelize.DATE,
-    allowNull: false,
-    defaultValue: Sequelize.NOW,
-  },
-});
-
-const Category = sequelize.define("category", {
-  name: {
     type: Sequelize.STRING,
     allowNull: false,
   },
@@ -70,6 +56,19 @@ const Item = sequelize.define("item", {
     allowNull: false,
     defaultValue: Sequelize.NOW,
   },
+  imageUrl: {
+    type: Sequelize.STRING,
+    allowNull: true,
+  },
+  category: {
+    type: Sequelize.STRING,
+    allowNull: true,
+  },
+});
+
+Item.beforeCreate(async (item, options) => {
+  const itemName = item.name.toLowerCase().replace(/ /g, "-");
+  item.imageUrl = `http://localhost:3000/images/${itemName}.jpg`;
 });
 
 const Order = sequelize.define("order", {
@@ -96,11 +95,13 @@ const OrderItem = sequelize.define("orderItem", {
   },
 });
 
-User.hasMany(Order);
-Order.belongsTo(User);
+OrderItem.beforeCreate(async (orderItem, options) => {
+  const item = await Item.findByPk(orderItem.itemId);
+  orderItem.price = item.price;
+});
 
-Category.hasMany(Item);
-Item.belongsTo(Category);
+user.hasMany(Order);
+Order.belongsTo(user);
 
 Order.hasMany(OrderItem);
 OrderItem.belongsTo(Order);
@@ -111,52 +112,79 @@ OrderItem.belongsTo(Item);
 sequelize
   .sync({ force: true })
   .then(() => {
-    
     return Promise.all([
-      User.create({
+      user.create({
         email: "john.smith@example.com",
         password: "password1",
       }),
-      User.create({
+      user.create({
         email: "jane.doe@example.com",
         password: "password2",
       }),
-      User.create({
+      user.create({
         email: "bob.johnson@example.com",
         password: "password3",
       }),
-      Category.create({
-        name: "Clothing",
-      }),
-      Category.create({
-        name: "Electronics",
-      }),
-      Category.create({
-        name: "Home & Garden",
-      }),
+
       Item.create({
-        name: "T-shirt",
-        description: "A comfortable t-shirt for everyday wear",
+        name: "Perfume 1",
+        description: "Smells nice of course!",
         price: 19.99,
-        categoryId: 1,
+        category: "mens",
       }),
       Item.create({
-        name: "Smartphone",
-        description: "The latest smartphone with advanced features",
-        price: 999.99,
-        categoryId: 2,
+        name: "Perfume 2",
+        description: "Smells nice of course!",
+        price: 19.99,
+        category: "womens",
       }),
       Item.create({
-        name: "Sofa",
-        description: "A cozy sofa for your living room",
-        price: 499.99,
-        categoryId: 3,
+        name: "Perfume 3",
+        description: "Smells nice of course!",
+        price: 19.99,
+        category: "mens",
+      }),
+      Item.create({
+        name: "Perfume 4",
+        description: "Smells nice of course!",
+        price: 19.99,
+        category: "womens",
+      }),
+      Item.create({
+        name: "Perfume 5",
+        description: "Smells nice of course!",
+        price: 19.99,
+        category: "mens",
+      }),
+      Item.create({
+        name: "Perfume 6",
+        description: "Smells nice of course!",
+        price: 19.99,
+        category: "womens",
+      }),
+      Item.create({
+        name: "Perfume 7",
+        description: "Smells nice of course!",
+        price: 19.99,
+        category: "mens",
+      }),
+      Item.create({
+        name: "Perfume 8",
+        description: "Smells nice of course!",
+        price: 19.99,
+        category: "womens",
+      }),
+      Item.create({
+        name: "Perfume 9",
+        description: "Smells nice of course!",
+        price: 19.99,
+        category: "mens",
       }),
       Order.create({
-        UserId: 1,
+        userId: 1,
       }),
       Order.create({
-        UserId: 2,
+        userId: 2,
       }),
       OrderItem.create({
         orderId: 1,
@@ -189,69 +217,83 @@ sequelize
 
 console.log(path.join(__dirname, "../ecom-frontend/public/images"));
 
-// const authConfig = {
-//   domain: 'dev-xgtapnha6ng8fvvj.us.auth0.com',
-//   audience: 'https://dev-xgtapnha6ng8fvvj.us.auth0.com/api/v2/'
-// };
+const authConfig = {
+  domain: "dev-xgtapnha6ng8fvvj.us.auth0.com",
+  audience: "https://dev-xgtapnha6ng8fvvj.us.auth0.com/api/v2/",
+};
 
-// const checkJwt = jwt({
-//   secret: jwksRsa.expressJwtSecret({
-//     cache: true,
-//     rateLimit: true,
-//     jwksRequestsPerMinute: 5,
-//     jwksUri: `https://${authConfig.domain}/.well-known/jwks.json`
-//   }),
-//   audience: authConfig.audience,
-//   issuer: `https://${authConfig.domain}/`,
-//   algorithms: ['RS256']
-// });
+const checkJwt = jwt({
+  secret: jwksRsa.expressJwtSecret({
+    cache: true,
+    rateLimit: true,
+    jwksRequestsPerMinute: 5,
+    jwksUri: `https://${authConfig.domain}/.well-known/jwks.json`,
+  }),
+  audience: authConfig.audience,
+  issuer: `https://${authConfig.domain}/`,
+  algorithms: ["RS256"],
+});
 
-// const authenticateUser = (req, res, next) => {
-//   if (!req.headers.authorization || !req.headers.authorization.startsWith('Bearer ')) {
-//     return res.status(401).send('Unauthorized');
-//   }
+const authenticateuser = (req, res, next) => {
+  if (
+    !req.headers.authorization ||
+    !req.headers.authorization.startsWith("Bearer ")
+  ) {
+    return res.status(401).send("Unauthorized");
+  }
 
-//   const token = req.headers.authorization.split(' ')[1];
-//   jwt.verify(token, jwksRsa.koaJwtSecret({
-//     jwksUri: `https://${authConfig.domain}/.well-known/jwks.json`
-//   }), (err, decoded) => {
-//     if (err) {
-//       return res.status(401).send('Unauthorized');
-//     }
+  const token = req.headers.authorization.split(" ")[1];
+  jwt.verify(
+    token,
+    jwksRsa.koaJwtSecret({
+      jwksUri: `https://${authConfig.domain}/.well-known/jwks.json`,
+    }),
+    (err, decoded) => {
+      if (err) {
+        return res.status(401).send("Unauthorized");
+      }
 
-//     req.user = decoded;
-//     next();
-//   });
-// }
+      req.user = decoded;
+      next();
+    }
+  );
+};
 
-
-app.get('/Users', 
-//checkJwt, 
-(req, res) => {
-  User.findAll()
-    .then((Users) => {
-      res.json(Users);
+app.get("/users", checkJwt, (req, res) => {
+  user
+    .findAll()
+    .then((users) => {
+      res.json(users);
     })
     .catch((err) => {
       console.error(err);
-      res.status(500).send("Error retrieving Users");
-    }
-  );
+      res.status(500).send("Error retrieving users");
+    });
 });
 
-app.get('/Users/:id', (req, res) => {
-  User.findByPk(req.params.id)
-    .then((User) => {
-      if (User) {
-        res.json(User);
+app.get("/users/:id", (req, res) => {
+  user
+    .findByPk(req.params.id)
+    .then((user) => {
+      if (user) {
+        res.json(user);
       } else {
-        res.status(404).send("User not found");
+        res.status(404).send("user not found");
       }
     })
     .catch((err) => {
       console.error(err);
-      res.status(500).send("Error retrieving User");
-    }
-  );
+      res.status(500).send("Error retrieving user");
+    });
 });
 
+app.get('/products', (req, res) => {
+  Item.findAll()
+    .then(items => {
+      res.json(items)
+    })
+    .catch(err => {
+      console.error(err)
+      res.status(500).send('Error retrieving products')
+    })
+})

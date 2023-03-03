@@ -6,3 +6,10 @@ const database = new Pool({
   connectionString: POSTGRES_URL,
 });
 // A database for an ecommerce website
+
+
+function getProducts() {
+  return database.query("SELECT * FROM products");
+}
+
+
