@@ -2,10 +2,12 @@ require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
 const app = express();
-const jwt = require("jsonwebtoken");
 const Sequelize = require("sequelize");
 const database = require("./services/database");
 const path = require("path");
+const bcrypt = require("bcrypt");
+const { expressjwt: jwt } = require("express-jwt");
+const jwksRsa = require('jwks-rsa');
 
 
 const PORT = process.env.PORT || 3333;
@@ -14,20 +16,14 @@ app.use(cors());
 app.use(express.json());
 app.use(express.static(path.join(__dirname, "../ecom-frontend/public/images")));
 
-// Routes for an ecommerce website
-//postgres://postgres:387456@localhost:5432/ecom
+
 const sequelize = new Sequelize("ecom", "postgres", "387456", {
   host: "localhost",
   port: 5432,
   dialect: "postgres",
 });
 
-// Define the models
-const Buyer = sequelize.define("buyer", {
-  name: {
-    type: Sequelize.STRING,
-    allowNull: false,
-  },
+const User = sequelize.define("User", {
   email: {
     type: Sequelize.STRING,
     allowNull: false,
@@ -100,9 +96,8 @@ const OrderItem = sequelize.define("orderItem", {
   },
 });
 
-// Define the relationships
-Buyer.hasMany(Order);
-Order.belongsTo(Buyer);
+User.hasMany(Order);
+Order.belongsTo(User);
 
 Category.hasMany(Item);
 Item.belongsTo(Category);
@@ -113,24 +108,20 @@ OrderItem.belongsTo(Order);
 Item.hasMany(OrderItem);
 OrderItem.belongsTo(Item);
 
-// Sync the models with the database
 sequelize
   .sync({ force: true })
   .then(() => {
-    // Populate the database with sample data
+    
     return Promise.all([
-      Buyer.create({
-        name: "John Smith",
+      User.create({
         email: "john.smith@example.com",
         password: "password1",
       }),
-      Buyer.create({
-        name: "Jane Doe",
+      User.create({
         email: "jane.doe@example.com",
         password: "password2",
       }),
-      Buyer.create({
-        name: "Bob Johnson",
+      User.create({
         email: "bob.johnson@example.com",
         password: "password3",
       }),
@@ -162,10 +153,10 @@ sequelize
         categoryId: 3,
       }),
       Order.create({
-        buyerId: 1,
+        UserId: 1,
       }),
       Order.create({
-        buyerId: 2,
+        UserId: 2,
       }),
       OrderItem.create({
         orderId: 1,
@@ -188,7 +179,6 @@ sequelize
     ]);
   })
   .then(() => {
-    // Start the server
     app.listen(PORT, () => {
       console.log("Server listening on port 3333");
     });
@@ -198,3 +188,70 @@ sequelize
   });
 
 console.log(path.join(__dirname, "../ecom-frontend/public/images"));
+
+// const authConfig = {
+//   domain: 'dev-xgtapnha6ng8fvvj.us.auth0.com',
+//   audience: 'https://dev-xgtapnha6ng8fvvj.us.auth0.com/api/v2/'
+// };
+
+// const checkJwt = jwt({
+//   secret: jwksRsa.expressJwtSecret({
+//     cache: true,
+//     rateLimit: true,
+//     jwksRequestsPerMinute: 5,
+//     jwksUri: `https://${authConfig.domain}/.well-known/jwks.json`
+//   }),
+//   audience: authConfig.audience,
+//   issuer: `https://${authConfig.domain}/`,
+//   algorithms: ['RS256']
+// });
+
+// const authenticateUser = (req, res, next) => {
+//   if (!req.headers.authorization || !req.headers.authorization.startsWith('Bearer ')) {
+//     return res.status(401).send('Unauthorized');
+//   }
+
+//   const token = req.headers.authorization.split(' ')[1];
+//   jwt.verify(token, jwksRsa.koaJwtSecret({
+//     jwksUri: `https://${authConfig.domain}/.well-known/jwks.json`
+//   }), (err, decoded) => {
+//     if (err) {
+//       return res.status(401).send('Unauthorized');
+//     }
+
+//     req.user = decoded;
+//     next();
+//   });
+// }
+
+
+app.get('/Users', 
+//checkJwt, 
+(req, res) => {
+  User.findAll()
+    .then((Users) => {
+      res.json(Users);
+    })
+    .catch((err) => {
+      console.error(err);
+      res.status(500).send("Error retrieving Users");
+    }
+  );
+});
+
+app.get('/Users/:id', (req, res) => {
+  User.findByPk(req.params.id)
+    .then((User) => {
+      if (User) {
+        res.json(User);
+      } else {
+        res.status(404).send("User not found");
+      }
+    })
+    .catch((err) => {
+      console.error(err);
+      res.status(500).send("Error retrieving User");
+    }
+  );
+});
+
