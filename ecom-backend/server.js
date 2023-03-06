@@ -217,49 +217,9 @@ sequelize
 
 console.log(path.join(__dirname, "../ecom-frontend/public/images"));
 
-const authConfig = {
-  domain: "dev-xgtapnha6ng8fvvj.us.auth0.com",
-  audience: "https://dev-xgtapnha6ng8fvvj.us.auth0.com/api/v2/",
-};
 
-const checkJwt = jwt({
-  secret: jwksRsa.expressJwtSecret({
-    cache: true,
-    rateLimit: true,
-    jwksRequestsPerMinute: 5,
-    jwksUri: `https://${authConfig.domain}/.well-known/jwks.json`,
-  }),
-  audience: authConfig.audience,
-  issuer: `https://${authConfig.domain}/`,
-  algorithms: ["RS256"],
-});
 
-const authenticateuser = (req, res, next) => {
-  if (
-    !req.headers.authorization ||
-    !req.headers.authorization.startsWith("Bearer ")
-  ) {
-    return res.status(401).send("Unauthorized");
-  }
-
-  const token = req.headers.authorization.split(" ")[1];
-  jwt.verify(
-    token,
-    jwksRsa.koaJwtSecret({
-      jwksUri: `https://${authConfig.domain}/.well-known/jwks.json`,
-    }),
-    (err, decoded) => {
-      if (err) {
-        return res.status(401).send("Unauthorized");
-      }
-
-      req.user = decoded;
-      next();
-    }
-  );
-};
-
-app.get("/users", checkJwt, (req, res) => {
+app.get("/users", (req, res) => {
   user
     .findAll()
     .then((users) => {

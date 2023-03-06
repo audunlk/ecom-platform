@@ -7,7 +7,7 @@ export default function Hero() {
       <div className="hero-left">
         <h1>ELIXIR</h1>
         <p>Shop for the latest fashion trends</p>
-        <Link to="/products/all">
+        <Link to="/products">
           <button className="btn">Shop Now</button>
         </Link>
       </div>
