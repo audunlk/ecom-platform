@@ -36,19 +36,18 @@ const history = useHistory()
 
   const addDuplicatesAndSumCart = (cart: any[]) => {
     const cartWithDuplicates = cart.reduce((acc: any, item: any) => {
-        const itemInCart = acc.find((i: any) => i.id === item.id);
-        if (itemInCart) {
-            itemInCart.quantity += 1;
-            itemInCart.price = itemInCart.price * itemInCart.quantity;
+        const index = acc.findIndex((i: any) => i.id === item.id);
+        if (index !== -1) {
+            acc[index].quantity += 1;
+            acc[index].price = parseInt(acc[index].price) + parseInt(item.price);
         } else {
-            acc.push({ ...item, quantity: 1 });
+            acc.push({ ...item, quantity: 1, price: parseInt(item.price) });
         }
         return acc;
     }, []);
 
-    console.log(cartWithDuplicates)
     return cartWithDuplicates;
-    };
+};
 
     const total = addDuplicatesAndSumCart(cart).reduce((acc: any, item: any) => {
         return acc + +item.price;
@@ -64,21 +63,19 @@ const history = useHistory()
         const userId = decodedToken.id || null;
         const items = addDuplicatesAndSumCart(cart);
         const response = await sendOrder(userId, items);
-        const orderId = response.id;
+        const orderId: number = response.id;
         console.log(orderId)
+        console.log(typeof(orderId))
         console.log(response)
-        if (response) {
-          localStorage.removeItem("cart");
-          setCart([]);
-          console.log("order placed");
-          history.push("/checkout", { orderId } );
-        }
-      } catch (error) {
+        localStorage.removeItem("cart");
+        history.push(`/checkout/`, { orderId: orderId, total: total });
+        } catch (error) {
         console.log(error);
-      }
+        }
     } else {
-      history.push("/login");
+        history.push("/register")
     }
+
   };
 
   return (

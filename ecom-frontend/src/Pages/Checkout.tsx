@@ -1,4 +1,4 @@
-import React from 'react'
+import React, {useState, useEffect} from 'react'
 import { Link } from 'react-router-dom'
 import { useLocation } from "react-router-dom";
 
@@ -8,14 +8,28 @@ import { useLocation } from "react-router-dom";
 
 export default function Checkout() {
     const location = useLocation();
-    interface State {
-        orderId: string;
-    }
-    const { orderId  } = location.state as State;
-    console.log(orderId, )
+    const [loading, setLoading] = useState(true);
 
-    
-        
+    const [orderId, setOrderId] = useState(0);
+    const [total, setTotal] = useState(0);
+
+    interface ILocationState {
+        orderId: number;
+        total: number;
+    }
+
+    useEffect(() => {
+        const awaitOrderInfo = async () => {
+            const { orderId, total } = location.state as ILocationState;
+            setOrderId(orderId);
+            setTotal(total);
+            setLoading(false);
+        };
+        awaitOrderInfo();
+    }, [ location.state]);
+
+
+
 
 
   return (
@@ -26,7 +40,9 @@ export default function Checkout() {
             placed successfully!
             </h4>
             <p>Thank you for shopping at Elixir!</p>
-            <p>Order ID: {}</p>
+            {loading && <p>Loading...</p>}
+            <p>Order ID: {orderId}</p>
+            <p>Total: ${total}</p>
             <Link to="/products"
             ><button className="loginbtn">Continue Shopping</button></Link>
         </div>
