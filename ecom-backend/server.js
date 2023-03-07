@@ -6,9 +6,9 @@ const Sequelize = require("sequelize");
 const database = require("./services/database");
 const path = require("path");
 const bcrypt = require("bcrypt");
-const { expressjwt: jwt } = require("express-jwt");
-const jwksRsa = require("jwks-rsa");
+const jwt = require("jsonwebtoken");
 
+const saltRounds = 10;
 const PORT = process.env.PORT || 3333;
 
 app.use(cors());
@@ -79,7 +79,7 @@ const Order = sequelize.define("order", {
   },
 });
 
-const OrderItem = sequelize.define("orderItem", {
+const orderitem = sequelize.define("orderitem", {
   quantity: {
     type: Sequelize.INTEGER,
     allowNull: false,
@@ -95,19 +95,19 @@ const OrderItem = sequelize.define("orderItem", {
   },
 });
 
-OrderItem.beforeCreate(async (orderItem, options) => {
-  const item = await Item.findByPk(orderItem.itemId);
-  orderItem.price = item.price;
+orderitem.beforeCreate(async (orderitem, options) => {
+  const item = await Item.findByPk(orderitem.itemId);
+  orderitem.price = item.price;
 });
 
 user.hasMany(Order);
 Order.belongsTo(user);
 
-Order.hasMany(OrderItem);
-OrderItem.belongsTo(Order);
+Order.hasMany(orderitem);
+orderitem.belongsTo(Order);
 
-Item.hasMany(OrderItem);
-OrderItem.belongsTo(Item);
+Item.hasMany(orderitem);
+orderitem.belongsTo(Item);
 
 sequelize
   .sync({ force: true })
@@ -186,19 +186,19 @@ sequelize
       Order.create({
         userId: 2,
       }),
-      OrderItem.create({
+      orderitem.create({
         orderId: 1,
         itemId: 1,
         quantity: 2,
         price: 19.99,
       }),
-      OrderItem.create({
+      orderitem.create({
         orderId: 1,
         itemId: 2,
         quantity: 1,
         price: 999.99,
       }),
-      OrderItem.create({
+      orderitem.create({
         orderId: 2,
         itemId: 3,
         quantity: 1,
@@ -216,6 +216,59 @@ sequelize
   });
 
 console.log(path.join(__dirname, "../ecom-frontend/public/images"));
+
+
+//////////////////// 
+//EXPRESS ENDPOINTS
+////////////////////
+const secret = process.env.JWT_SECRET || "secret";
+
+async function generateToken (user) {
+  const payload = {
+    id: user.id,
+    email: user.email,
+  };
+  const options = {
+    expiresIn: '1d',
+  };
+  return jwt.sign(payload, secret, options);
+}
+
+// Login endpoint
+app.post('/login', async (req, res) => {
+  const { email, password } = req.body;
+  const existingUser = await user.findOne({ where: { email } });
+  if (!existingUser) {
+    res.status(401).json({ error: 'Invalid credentials' });
+    return;
+  }
+  const passwordsMatch = await bcrypt.compare(password, existingUser.password);
+  if (!passwordsMatch) {
+    res.status(401).json({ error: 'Invalid credentials' });
+    return;
+  }
+  console.log(existingUser + "existing user in login")
+  const token = await generateToken(existingUser);
+
+  res.json({ token });
+});
+
+
+// Register endpoint
+app.post('/register', async (req, res) => {
+  const { email, password } = req.body;
+  const existingUser = await user.findOne({ where: { email } });
+  if (existingUser) {
+    res.status(409).json({ error: 'Email already in use' });
+    return;
+  }
+  const hashedPassword = await bcrypt.hash(password, 10);
+  const newUser = await user.create({ email, password: hashedPassword });
+  console.log(newUser + "new user in reg")
+  const token = await generateToken(newUser);
+  res.json({ token });
+});
+
 
 
 
@@ -257,3 +310,35 @@ app.get('/products', (req, res) => {
       res.status(500).send('Error retrieving products')
     })
 })
+  
+//handle order
+// export async function sendOrder(userId, items){
+//   const response = await fetch(`${ELIXIR_URL}/orders`, {
+//       method: 'POST',
+//       headers: {
+//           'Content-Type': 'application/json',
+//       },
+//       body: JSON.stringify({ 
+//       userId,
+//       items
+//       })   
+//   }); 
+//   const data = await response.json();
+//   return data;
+// } 
+
+app.post('/orders', async (req, res) => {
+  const { userId, items } = req.body;
+  const order = await Order.create({ userId });
+  const orderItems = items.map(item => {
+    return {
+      orderId: order.id,
+      itemId: item.id,
+      quantity: item.quantity,
+      price: item.price,
+    }
+  });
+  await orderitem.bulkCreate(orderItems);
+  res.send(order);
+});
+

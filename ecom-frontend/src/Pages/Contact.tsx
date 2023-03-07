@@ -4,10 +4,7 @@ export default function Contact() {
   return (
         <div className="contact-container">
               <div className="contact-item">
-                {/* <img
-                  className="img"
-                    src="http://localhost:3000/images/hero.jpg"
-                /> */}
+               
                 <div className="contact-item-info">
                   <h1>Contact</h1>
                   <p style={{marginBottom: "2rem"}}>Lorem ipsum dolor sit amet consectetur, adipisicing elit. Vel minus at, dolores odio ex magni corporis quidem enim eius. Maxime labore hic aliquid assumenda saepe, quas repudiandae fuga quae accusamus!</p>
@@ -18,8 +15,7 @@ export default function Contact() {
                     </iframe>
                 </div>
                 </div>
-                {/* random google maps api */}
-                
+                 
               </div>
     </div>
   )

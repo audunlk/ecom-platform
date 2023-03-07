@@ -4,6 +4,8 @@ import Hero from '../Components/Hero'
 
 
 export default function Home() {
+    const token = localStorage.getItem('token')
+    console.log(token)
     
     return (
     <div className="main">
