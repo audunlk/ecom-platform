@@ -8,7 +8,6 @@ const path = require("path");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 
-const saltRounds = 10;
 const PORT = process.env.PORT || 3333;
 
 app.use(cors());
@@ -57,10 +56,6 @@ const Item = sequelize.define("item", {
     defaultValue: Sequelize.NOW,
   },
   imageUrl: {
-    type: Sequelize.STRING,
-    allowNull: true,
-  },
-  category: {
     type: Sequelize.STRING,
     allowNull: true,
   },
@@ -130,55 +125,46 @@ sequelize
         name: "Perfume 1",
         description: "Smells nice of course!",
         price: 19.99,
-        category: "mens",
       }),
       Item.create({
         name: "Perfume 2",
         description: "Smells nice of course!",
         price: 19.99,
-        category: "womens",
       }),
       Item.create({
         name: "Perfume 3",
         description: "Smells nice of course!",
         price: 19.99,
-        category: "mens",
       }),
       Item.create({
         name: "Perfume 4",
         description: "Smells nice of course!",
         price: 19.99,
-        category: "womens",
       }),
       Item.create({
         name: "Perfume 5",
         description: "Smells nice of course!",
         price: 19.99,
-        category: "mens",
       }),
       Item.create({
         name: "Perfume 6",
         description: "Smells nice of course!",
         price: 19.99,
-        category: "womens",
       }),
       Item.create({
         name: "Perfume 7",
         description: "Smells nice of course!",
         price: 19.99,
-        category: "mens",
       }),
       Item.create({
         name: "Perfume 8",
         description: "Smells nice of course!",
         price: 19.99,
-        category: "womens",
       }),
       Item.create({
         name: "Perfume 9",
         description: "Smells nice of course!",
         price: 19.99,
-        category: "mens",
       }),
       Order.create({
         userId: 1,

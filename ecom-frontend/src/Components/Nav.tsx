@@ -23,34 +23,17 @@ export default function Nav() {
             setCartSize(e.detail.length)
         })
     }, [history,
-        loggedIn
-    ])
+        loggedIn,
 
-    const checkToken = () => {
-        if(loggedIn) {
-            return true
-        } else {
-            return false
-        }
-    }
+    ])
 
     const logout = () => {
         localStorage.removeItem('token')
         localStorage.removeItem('cart')
         history.push('/')
+        setLoggedIn(false)
     }
 
-
-
-
-
-
-
-
-
-
-
-    
 
   return (
 <div className="navigation-menu">
@@ -71,7 +54,7 @@ export default function Nav() {
                     </button>
                 </Link>
                 <Link to="/login">
-                    {checkToken() ? <button className="loginbtn"
+                    {loggedIn ? <button className="loginbtn"
                     onClick={logout}
                     >Logout</button> : 
                     <button className="loginbtn"
