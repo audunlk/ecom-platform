@@ -3,12 +3,14 @@ import { Link } from "react-router-dom";
 import { sendOrder } from "../services/products";
 import { useHistory } from "react-router-dom";
 import jwtDecode from "jwt-decode";
+import { getCarWithoutDuplicates, getCartSum } from "../utils/cart";
+
 
 
 export default function Cart() {
   const [cart, setCart] = useState<any[]>([]);
-    const [loggedIn, setLoggedIn] = useState(false);
-const history = useHistory()
+  const [loggedIn, setLoggedIn] = useState(false);
+  const history = useHistory()
 
 
   console.log(cart);
@@ -34,24 +36,11 @@ const history = useHistory()
     setCart(cartItems);
   }, [history, loggedIn,]);
 
-  const addDuplicatesAndSumCart = (cart: any[]) => {
-    const cartWithDuplicates = cart.reduce((acc: any, item: any) => {
-        const index = acc.findIndex((i: any) => i.id === item.id);
-        if (index !== -1) {
-            acc[index].quantity += 1;
-            acc[index].price = parseInt(acc[index].price) + parseInt(item.price);
-        } else {
-            acc.push({ ...item, quantity: 1, price: parseInt(item.price) });
-        }
-        return acc;
-    }, []);
+  const cartWithoutDuplicates = getCarWithoutDuplicates(cart);
+  const cartSum = getCartSum(cart);
+  
 
-    return cartWithDuplicates;
-};
-
-    const total = addDuplicatesAndSumCart(cart).reduce((acc: any, item: any) => {
-        return acc + +item.price;
-    }, 0).toFixed(2);
+    
 
 
     
@@ -61,14 +50,12 @@ const history = useHistory()
       try {
         const decodedToken: any = jwtDecode(token);
         const userId = decodedToken.id || null;
-        const items = addDuplicatesAndSumCart(cart);
+        const items = cartWithoutDuplicates;
         const response = await sendOrder(userId, items);
         const orderId: number = response.id;
-        console.log(orderId)
-        console.log(typeof(orderId))
-        console.log(response)
+        
         localStorage.removeItem("cart");
-        history.push(`/checkout/`, { orderId: orderId, total: total });
+        history.push(`/checkout/`, { orderId: orderId, total: cartSum });
         } catch (error) {
         console.log(error);
         }
@@ -109,7 +96,7 @@ const history = useHistory()
       <div className="cart-grid-list">
         {cart.length === 0 ? 
         <div>Your cart is empty</div> :
-        addDuplicatesAndSumCart(cart).map((item: any) => {
+        cartWithoutDuplicates.map((item: any) => {
           return (
             <div key={item.id} className="cart-grid-item" 
             
@@ -146,7 +133,7 @@ const history = useHistory()
         Total: $
         {cart.length === 0 ?
         null:
-        total}
+        cartSum}
             
       </div>
       

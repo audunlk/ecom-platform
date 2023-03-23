@@ -1,7 +1,7 @@
-import React, {useState, useEffect} from 'react';
+import React from 'react';
 import './App.scss';
 import { BrowserRouter as Router, Route, Switch } from 'react-router-dom';
-//navigator
+import useIsOnMobile from './Hooks/useIsOnMobile';
 
 import Home from './Pages/Home';
 import Products from './Pages/Products';
@@ -14,29 +14,13 @@ import Register from './Pages/Register';
 import Login from './Pages/Login';
 
 function App() {
-  const [onMobile, setOnMobile] = useState(false);
-
-  useEffect(() => {
-    const handleResize = () => {
-      if (window.innerWidth < 768) {
-        setOnMobile(true);
-      } else {
-        setOnMobile(false);
-      }
-    };
-    window.addEventListener('resize', handleResize);
-    handleResize();
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
-
-
+  const onMobile = useIsOnMobile();
 
   return(
     <div id="app">
       <Router>
       {onMobile ? <MobileNav /> : <Nav />}
       <Switch>
-          
           <Route exact path="/" component={Home} />
           <Route path="/products" component={Products} />
           <Route path="/contact" component={Contact} /> 
@@ -47,7 +31,6 @@ function App() {
         </Switch>
       </Router>
     </div>
-
   )
 }
 

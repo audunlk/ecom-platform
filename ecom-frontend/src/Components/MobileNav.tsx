@@ -14,8 +14,6 @@ export default function MobileNav() {
         setCartLength(cartItems.length)
     }, [])
 
-    
-
   return (
     <div className="navigation-mobile">
     <div className="collapse" id="navbarToggleExternalContent">

@@ -3,7 +3,6 @@ const express = require("express");
 const cors = require("cors");
 const app = express();
 const Sequelize = require("sequelize");
-const database = require("./services/database");
 const path = require("path");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
@@ -255,9 +254,6 @@ app.post('/register', async (req, res) => {
   res.json({ token });
 });
 
-
-
-
 app.get("/users", (req, res) => {
   user
     .findAll()
@@ -297,21 +293,6 @@ app.get('/products', (req, res) => {
     })
 })
   
-//handle order
-// export async function sendOrder(userId, items){
-//   const response = await fetch(`${ELIXIR_URL}/orders`, {
-//       method: 'POST',
-//       headers: {
-//           'Content-Type': 'application/json',
-//       },
-//       body: JSON.stringify({ 
-//       userId,
-//       items
-//       })   
-//   }); 
-//   const data = await response.json();
-//   return data;
-// } 
 
 app.post('/orders', async (req, res) => {
   const { userId, items } = req.body;
